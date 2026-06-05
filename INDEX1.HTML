@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Voice Pro</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #0b0f1a;
+  color: white;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 40px;
+}
+
+h2 { color: #a855f7; }
+
+.container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.main {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: #121826;
+  padding: 20px;
+  border-radius: 15px;
+  width: 400px;
+}
+
+textarea {
+  width: 100%;
+  height: 120px;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+select, input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+button {
+  margin-top: 15px;
+  padding: 12px;
+  width: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg,#7c3aed,#ec4899);
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.status {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.loader {
+  display: none;
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>AI Voice Pro</h2>
+</header>
+
+<div class="container">
+  <h1>AI Text to Speech Generator</h1>
+
+  <div class="main">
+
+    <!-- INPUT -->
+    <div class="card">
+      <textarea id="text">Hello! This is AI voice.</textarea>
+
+      <select id="language">
+        <option value="en-US">English</option>
+        <option value="hi-IN">Hindi</option>
+      </select>
+
+      <select id="gender">
+        <option value="FEMALE">Female Voice</option>
+        <option value="MALE">Male Voice</option>
+      </select>
+
+      <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
+
+      <button onclick="generate()">Generate</button>
+
+      <div class="loader" id="loader">⏳ Generating...</div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="card">
+      <audio id="player" controls></audio>
+      <button onclick="downloadAudio()">Download MP3</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let audioBlob;
+
+async function generate() {
+  const text = document.getElementById("text").value;
+  const language = document.getElementById("language").value;
+  const gender = document.getElementById("gender").value;
+  const speed = document.getElementById("speed").value;
+
+  document.getElementById("loader").style.display = "block";
+  document.getElementById("status").innerText = "Generating...";
+
+  try {
+    const res = await fetch("/speak", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ text, language, gender, speed })
+    });
+
+    if (!res.ok) throw new Error("Server error");
+
+    audioBlob = await res.blob();
+    const url = URL.createObjectURL(audioBlob);
+
+    const player = document.getElementById("player");
+    player.src = url;
+    player.play();
+
+    document.getElementById("status").innerText = "✅ Ready!";
+  } catch (err) {
+    document.getElementById("status").innerText = "❌ Error generating voice";
+  }
+
+  document.getElementById("loader").style.display = "none";
+}
+
+function downloadAudio() {
+  if (!audioBlob) {
+    alert("Generate audio first!");
+    return;
+  }
+
+  const url = URL.createObjectURL(audioBlob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "voice.mp3";
+  a.click();
+}
+</script>
+
+</body>
+</html>
